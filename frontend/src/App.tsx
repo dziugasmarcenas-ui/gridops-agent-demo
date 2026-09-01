@@ -19,7 +19,7 @@ const PRIORITY_LABELS: Record<string, string> = {
   urgent: "Skubus",
 };
 const TOOL_LABELS: Record<string, string> = {
-  query_incidents: "Incidentų duomenų paieška",
+  query_incidents: "Incidentų paieška",
   search_procedures: "Procedūrų paieška",
   draft_escalation_ticket: "Eskalavimo juodraščio parengimas",
 };
@@ -49,6 +49,8 @@ type Incident = {
   affected_customers: number;
   confirmed_cause: string | null;
   planned: boolean;
+  started_at: string;
+  last_update: string;
   priority: Priority;
 };
 
@@ -86,15 +88,15 @@ type TicketDraft = {
 const DEMO_QUESTIONS = [
   {
     label: "A: Prioritetai šį rytą",
-    question: "Kuriuos atvirus incidentus turėtume prioritetizuoti šį rytą ir kodėl?",
+    question: "Kuriuos atvirus incidentus reikėtų tvarkyti pirmiausia?",
   },
   {
     label: "B: Eskalavimo juodraštis INC-1042",
-    question: "Parengti INC-1042 eskalavimo juodraštį",
+    question: "Parengti INC-1042 eskalavimą",
   },
   {
     label: "C: Kas sukėlė INC-1042?",
-    question: "Kokia yra patvirtinta INC-1042 priežastis?",
+    question: "Kokia patvirtinta INC-1042 sutrikimo priežastis?",
   },
 ];
 
@@ -146,7 +148,7 @@ export function App() {
     <main className="layout">
       <p className="eyebrow">Sintetinis tinklų operacijų demonstracinis projektas — jokių realių duomenų, jokių realių sistemų</p>
       <h1>GridOps Agent</h1>
-      <p className="subtitle">Tinklų incidentų operacijų asistentas</p>
+      <p className="subtitle">Incidentų analizė ir eskalavimas</p>
 
       <div className="demo-buttons">
         {DEMO_QUESTIONS.map((demo) => (
@@ -186,7 +188,7 @@ export function App() {
 
           {result && result.incidents.length > 0 && (
             <div className="priority-block">
-              <h2>Prioritetas (demonstracinė logika)</h2>
+              <h2>Prioritetas</h2>
               {result.incidents.map((incident) => (
                 <div key={incident.incident_id} className="priority-card">
                   <div className="priority-card-header">
@@ -194,8 +196,9 @@ export function App() {
                     <span className={`badge badge--${incident.priority.label}`}>
                       {PRIORITY_LABELS[incident.priority.label] ?? incident.priority.label}
                     </span>
-                    <span className="score">balas {incident.priority.score}</span>
+                    <span className="score">Prioriteto balas: {incident.priority.score}</span>
                   </div>
+                  <p className="reasons-label">Kodėl:</p>
                   <ul>
                     {incident.priority.reasons.map((reason, i) => (
                       <li key={i}>{reason}</li>
@@ -203,7 +206,7 @@ export function App() {
                   </ul>
                   {incident.priority.missing_inputs.length > 0 && (
                     <p className="missing">
-                      Trūkstama informacija:{" "}
+                      Ko trūksta:{" "}
                       {incident.priority.missing_inputs
                         .map((field) => MISSING_INPUT_LABELS[field] ?? field)
                         .join(", ")}
@@ -217,8 +220,9 @@ export function App() {
 
           {ticketDrafts.map((ticket) => (
             <div key={ticket.id} className="ticket-card">
+              <h3 className="ticket-title">Eskalavimo juodraštis</h3>
               <p className="ticket-flag">
-                {confirmedTicketIds.has(ticket.id) ? "PATVIRTINTA" : "JUODRAŠTIS — REIKALINGAS ŽMOGAUS PATVIRTINIMAS"}
+                {confirmedTicketIds.has(ticket.id) ? "PATVIRTINTA" : "JUODRAŠTIS — LAUKIA PATVIRTINIMO"}
               </p>
               <dl>
                 <dt>Incidento ID</dt>
@@ -234,7 +238,7 @@ export function App() {
               </dl>
               {!confirmedTicketIds.has(ticket.id) && (
                 <button onClick={() => confirmTicket(ticket.id)} disabled={confirming === ticket.id}>
-                  {confirming === ticket.id ? "Patvirtinama…" : "Patvirtinti (žmogaus veiksmas)"}
+                  {confirming === ticket.id ? "Patvirtinama…" : "Patvirtinti"}
                 </button>
               )}
             </div>
@@ -245,7 +249,7 @@ export function App() {
           {result && (
             <>
               <div className="side-block">
-                <h3>Naudoti įrankiai</h3>
+                <h3>Atlikti veiksmai</h3>
                 {result.tool_calls.length === 0 && <p className="empty">Nėra</p>}
                 <ul>
                   {result.tool_calls.map((call, i) => (
@@ -270,10 +274,12 @@ export function App() {
                       <tr><td>Svarbumas</td><td>{SEVERITY_LABELS[incident.severity] ?? incident.severity}</td></tr>
                       <tr><td>Paveiktų klientų skaičius</td><td>{incident.affected_customers}</td></tr>
                       <tr><td>Planuotas</td><td>{incident.planned ? "taip" : "ne"}</td></tr>
+                      <tr><td>Prasidėjo</td><td>{new Date(incident.started_at).toLocaleString("lt-LT")}</td></tr>
+                      <tr><td>Paskutinis atnaujinimas</td><td>{new Date(incident.last_update).toLocaleString("lt-LT")}</td></tr>
                       <tr>
                         <td>Patvirtinta priežastis</td>
                         <td className={incident.confirmed_cause ? "" : "unknown"}>
-                          {incident.confirmed_cause ?? "nenurodyta duomenyse"}
+                          {incident.confirmed_cause ?? "Nenurodyta"}
                         </td>
                       </tr>
                     </tbody>
@@ -282,12 +288,12 @@ export function App() {
               </div>
 
               <div className="side-block">
-                <h3>Procedūros šaltinis</h3>
+                <h3>Šaltiniai</h3>
                 {result.procedures.length === 0 && <p className="empty">Nerasta</p>}
                 {result.procedures.map((p, i) => (
                   <div key={i} className="evidence-card">
                     <p className="evidence-source">
-                      {p.document} — {p.section} (v{p.version})
+                      Procedūra: {p.document} · Skyrius: {p.section} (v{p.version})
                     </p>
                     <p className="evidence-text">{p.text}</p>
                   </div>
@@ -299,8 +305,8 @@ export function App() {
       </div>
 
       <footer className="footer-disclaimer">
-        Visi šiame demonstraciniame projekte naudojami incidentų duomenys ir procedūros yra
-        sintetiniai. Sistema neturi prieigos prie „Ignitis" vidinių sistemų ar duomenų.
+        Visi šiame demo naudojami incidentų duomenys ir procedūros yra sintetiniai. Sistema
+        neturi prieigos prie „Ignitis" vidinių duomenų ar sistemų.
       </footer>
     </main>
   );

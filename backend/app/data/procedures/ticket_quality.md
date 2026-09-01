@@ -1,7 +1,7 @@
 <!-- SINTETINIS DOKUMENTAS — fiktyvus demonstracinis turinys, ne tikra veiklos procedūra. -->
 <!-- version: 1.0 -->
 
-# Eskalavimo įrašo kokybės reikalavimai
+# Eskalavimo įrašo reikalavimai
 
 ## 2.1 Kas daro įrašą naudingą
 

@@ -147,6 +147,15 @@ button:disabled {
   font-size: 0.85rem;
 }
 
+.reasons-label {
+  margin: 0.4rem 0 0.15rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #5f695f;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .priority-card ul {
   margin: 0.25rem 0;
   padding-left: 1.2rem;
@@ -170,6 +179,11 @@ button:disabled {
   padding: 1rem;
   margin-top: 1rem;
   background: #fff5f0;
+}
+
+.ticket-title {
+  color: #7a1a1a;
+  margin: 0 0 0.4rem;
 }
 
 .ticket-flag {

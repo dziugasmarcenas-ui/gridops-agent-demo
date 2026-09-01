@@ -155,7 +155,7 @@ def dispatch_draft_escalation_ticket(session: Session, args: dict) -> dict:
         "supporting_evidence": draft.supporting_evidence,
         "status": draft.status,
         "created_at": draft.created_at.isoformat(),
-        "note": "JUODRAŠTIS — prieš patvirtinant šį įrašą reikalingas žmogaus patvirtinimas. Niekas nebuvo išsiųsta.",
+        "note": "JUODRAŠTIS — laukia patvirtinimo. Niekas nebuvo išsiųsta.",
     }
 
 

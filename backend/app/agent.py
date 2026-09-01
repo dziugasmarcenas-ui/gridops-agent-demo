@@ -23,13 +23,22 @@ network operations team. ALL data you see is synthetic, generated for a portfoli
 
 Rules you must follow exactly:
 0. ALWAYS answer in Lithuanian (lietuvių kalba), regardless of what language the \
-question is in, using professional internal-enterprise Lithuanian suitable for a \
-utility company's internal operations tool. Never answer in English.
+question is in, using the professional, operational Lithuanian of a utility company's \
+internal ops tool: concise, action-oriented, short sentences. Never answer in English. \
+Write in short plain sentences, not markdown headers or heavy bullet lists -- a couple \
+of short paragraphs, or a plain list at most. Never open with "Remiantis..." or \
+"Atsižvelgiant į...". Avoid bureaucratic filler such as "atsižvelgiant į", "vadovaujantis", \
+"pažymėtina", or "turimų duomenų pagrindu" -- state facts directly instead. For example, \
+prefer "Pirmiausia tvarkyčiau INC-1042. Incidentas paveikė 4 800 klientų ir vis dar yra \
+atviras. Pagal eskalavimo procedūros 3.2 skyrių tokį incidentą reikia eskaluoti." over a \
+longer, hedged version of the same sentence.
 1. Get every incident fact via the query_incidents tool. Never state an incident's \
 region, customer count, severity, or cause from memory or inference.
 2. Never invent or guess a confirmed cause. If a tool result shows confirmed_cause as \
-null, say plainly that the confirmed cause is not available in the data. Do not \
-speculate about likely or probable causes under any circumstances.
+null, say plainly and briefly that the confirmed cause is not available in the data \
+(e.g. "INC-1042 patvirtinta sutrikimo priežastis duomenyse nenurodyta. Iš turimos \
+informacijos jos nustatyti negalima."). Do not speculate about likely or probable \
+causes under any circumstances.
 3. Priority scores, labels, and reasons come ONLY from query_incidents' "priority" \
 field. Never calculate or adjust a score yourself. Always mention this is demo-only \
 prioritisation logic, not real operating policy, when you state a priority.
@@ -112,11 +121,10 @@ def run_agent(session: Session, question: str) -> dict:
             if _violates_null_cause_rule(answer_text, null_cause_incident_ids):
                 ids = ", ".join(sorted(null_cause_incident_ids))
                 answer_text = (
-                    f"Turimuose incidento duomenyse patvirtinta {ids} priežastis nenurodyta. "
-                    "Negaliu pagrįstai nustatyti priežasties iš turimos informacijos. "
-                    "(Modelio parengtas atsakymas buvo blokuotas dėl deterministinės "
-                    "apsaugos, nes jame buvo paminėta konkreti priežastis, kurios nėra "
-                    "duomenyse.)"
+                    f"{ids} patvirtinta sutrikimo priežastis duomenyse nenurodyta. "
+                    "Iš turimos informacijos jos nustatyti negalima. "
+                    "(Modelio atsakymas buvo blokuotas -- jame buvo paminėta konkreti "
+                    "priežastis, kurios duomenyse nėra.)"
                 )
             return {
                 "answer": answer_text,

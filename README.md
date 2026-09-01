@@ -53,9 +53,9 @@ page in order — full script with timings: [`docs/DEMO_SCRIPT.md`](docs/DEMO_SC
 
 2. **"B: Eskalavimo juodraštis INC-1042"** — the agent fetches the incident,
    cites the ticket-quality/escalation procedures, and creates a ticket.
-   Point out the red **JUODRAŠTIS — REIKALINGAS ŽMOGAUS PATVIRTINIMAS**
-   banner and click **Patvirtinti** — that's the only thing that can move it
-   to `PATVIRTINTA`. The agent explicitly says it cannot do this itself.
+   Point out the red **JUODRAŠTIS — LAUKIA PATVIRTINIMO** banner and click
+   **Patvirtinti** — that's the only thing that can move it to
+   `PATVIRTINTA`. The agent explicitly says it cannot do this itself.
 
 3. **"C: Kas sukėlė INC-1042?"** — the agent says the confirmed cause is not
    available in the data. It does not guess a cause. This is the one flow
