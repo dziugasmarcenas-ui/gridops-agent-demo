@@ -53,9 +53,9 @@ def confirm_ticket(ticket_id: int) -> TicketDraftResponse:
     with SessionLocal() as session:
         draft = session.get(TicketDraft, ticket_id)
         if draft is None:
-            raise HTTPException(status_code=404, detail=f"No ticket draft with id {ticket_id}")
+            raise HTTPException(status_code=404, detail=f"Nerastas juodraštis su id {ticket_id}")
         if draft.status == "confirmed":
-            raise HTTPException(status_code=409, detail="Ticket is already confirmed")
+            raise HTTPException(status_code=409, detail="Įrašas jau patvirtintas")
         draft.status = "confirmed"
         draft.confirmed_at = datetime.now(timezone.utc)
         session.commit()

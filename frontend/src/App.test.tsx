@@ -8,22 +8,23 @@ describe("App", () => {
     vi.unstubAllGlobals();
   });
 
-  it("renders the question form and demo shortcut buttons", () => {
+  it("renders the Lithuanian question form and demo shortcut buttons", () => {
     render(<App />);
 
-    expect(screen.getByPlaceholderText(/What caused INC-1042/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Flow A/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Flow B/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Flow C/ })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Kokia yra patvirtinta INC-1042 priežastis/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /A: Prioritetai šį rytą/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /B: Eskalavimo juodraštis/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /C: Kas sukėlė INC-1042/ })).toBeInTheDocument();
+    expect(screen.getByText(/sintetiniai/)).toBeInTheDocument();
   });
 
-  it("shows the agent's answer after asking a question", async () => {
+  it("shows the agent's Lithuanian answer after asking the null-cause question", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async () =>
         new Response(
           JSON.stringify({
-            answer: "The available incident data does not contain a confirmed cause.",
+            answer: "Turimuose incidento duomenyse patvirtinta INC-1042 priežastis nenurodyta.",
             tool_calls: [],
             incidents: [],
             procedures: [],
@@ -34,8 +35,8 @@ describe("App", () => {
     );
 
     render(<App />);
-    screen.getByRole("button", { name: /Flow C/ }).click();
+    screen.getByRole("button", { name: /C: Kas sukėlė INC-1042/ }).click();
 
-    expect(await screen.findByText(/does not contain a confirmed cause/)).toBeInTheDocument();
+    expect(await screen.findByText(/priežastis nenurodyta/)).toBeInTheDocument();
   });
 });

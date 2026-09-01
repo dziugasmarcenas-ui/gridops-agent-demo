@@ -1,33 +1,35 @@
-<!-- SYNTHETIC DOCUMENT — fictional demo content, not a real operating procedure. -->
+<!-- SINTETINIS DOKUMENTAS — fiktyvus demonstracinis turinys, ne tikra veiklos procedūra. -->
 <!-- version: 1.0 -->
 
-# Incident Triage (SYNTHETIC)
+# Incidentų pirminio vertinimo procedūra
 
-## 1.1 Purpose
+## 1.1 Paskirtis
 
-This procedure describes how to triage a newly reported network incident
-before it is assigned a priority or escalated. It applies to all incidents
-recorded in the incident tracking system, regardless of region.
+Ši procedūra apibrėžia, kaip pirmiausia įvertinti naujai užregistruotą tinklo
+incidentą prieš jam priskiriant prioritetą ar eskaluojant. Ji taikoma
+visiems incidentams, registruojamiems incidentų valdymo sistemoje,
+nepriklausomai nuo regiono.
 
-## 1.2 Initial classification
+## 1.2 Pirminis klasifikavimas
 
-On first review, classify every incident using three inputs: the number of
-affected customers, the elapsed duration since the incident started, and the
-severity level already recorded on the ticket. An incident with more than
-5,000 affected customers or a severity of "critical" should be treated as a
-same-shift priority regardless of duration.
+Pirminės peržiūros metu incidentą būtina klasifikuoti pagal tris rodiklius:
+paveiktų klientų skaičių, laiką nuo incidento pradžios ir jau užfiksuotą
+svarbumo lygį. Incidentas, paveikiantis daugiau nei 5000 klientų arba
+turintis „kritinį" svarbumą, laikytinas tos pačios pamainos prioritetu
+nepriklausomai nuo trukmės.
 
-## 1.3 Planned vs unplanned work
+## 1.3 Planuoti ir neplanuoti darbai
 
-Planned outages (maintenance windows, scheduled switching) are tracked in the
-same system as unplanned incidents but must never be prioritised alongside
-unplanned incidents in a morning review. A planned incident only needs
-triage attention if it has exceeded its scheduled window.
+Planuoti darbai (techninės priežiūros langai, suplanuoti perjungimai) yra
+registruojami toje pačioje sistemoje kaip ir neplanuoti incidentai, tačiau
+jų niekada negalima vertinti kartu su neplanuotais incidentais rytinės
+peržiūros metu. Planuotam darbui pirminio vertinimo dėmesio reikia tik
+tuomet, jei viršytas jam skirtas laikas.
 
-## 1.4 When cause is not yet confirmed
+## 1.4 Kai priežastis dar nepatvirtinta
 
-Many incidents remain open with no confirmed cause while investigation is
-ongoing. Triage staff must record the incident as "cause: unknown" rather
-than noting a suspected or probable cause in the confirmed-cause field. A
-suspected cause belongs in free-text notes only, never in the confirmed-cause
-field, until a technician has verified it on site.
+Daugelis incidentų lieka atviri be patvirtintos priežasties, kol vyksta
+tyrimas. Pirminio vertinimo darbuotojai privalo incidentą žymėti kaip
+„priežastis: nežinoma", o ne nurodyti spėjamą ar tikėtiną priežastį
+patvirtintos priežasties lauke. Spėjama priežastis gali būti nurodyta tik
+laisvo teksto pastabose, kol technikas jos nepatvirtina vietoje.

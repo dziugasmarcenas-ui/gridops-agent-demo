@@ -132,7 +132,7 @@ def dispatch_search_procedures(session: Session, args: dict) -> dict:
 def dispatch_draft_escalation_ticket(session: Session, args: dict) -> dict:
     incidents = query_incidents(session, incident_id=args["incident_id"], limit=1)
     if not incidents:
-        return {"error": f"No incident found with id {args['incident_id']!r}; cannot draft a ticket for it."}
+        return {"error": f"Incidentas {args['incident_id']!r} nerastas; juodraščio jam parengti negalima."}
 
     draft = TicketDraft(
         incident_id=args["incident_id"],
@@ -155,7 +155,7 @@ def dispatch_draft_escalation_ticket(session: Session, args: dict) -> dict:
         "supporting_evidence": draft.supporting_evidence,
         "status": draft.status,
         "created_at": draft.created_at.isoformat(),
-        "note": "DRAFT — human approval required before this ticket is confirmed. Nothing has been sent.",
+        "note": "JUODRAŠTIS — prieš patvirtinant šį įrašą reikalingas žmogaus patvirtinimas. Niekas nebuvo išsiųsta.",
     }
 
 

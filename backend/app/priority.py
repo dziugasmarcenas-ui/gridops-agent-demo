@@ -12,6 +12,13 @@ from datetime import datetime, timezone
 
 SEVERITY_POINTS = {"low": 5, "medium": 15, "high": 30, "critical": 45}
 
+# Display-only Lithuanian labels for the English severity enum stored in the
+# database -- the enum value itself (low/medium/high/critical) is untouched,
+# this is purely for building readable reason sentences.
+SEVERITY_LABELS_LT = {"low": "žemas", "medium": "vidutinis", "high": "aukštas", "critical": "kritinis"}
+
+DISCLAIMER_LT = "DEMONSTRACINĖ prioritizavimo logika — tai nėra reali energetikos įmonės veiklos politika."
+
 
 @dataclass(frozen=True)
 class PriorityResult:
@@ -19,7 +26,7 @@ class PriorityResult:
     label: str  # 'low' | 'medium' | 'high' | 'urgent'
     reasons: list[str]
     missing_inputs: list[str]
-    disclaimer: str = "DEMO-ONLY prioritisation logic — not real utility operating policy."
+    disclaimer: str = DISCLAIMER_LT
 
 
 def calculate_priority(
@@ -38,7 +45,7 @@ def calculate_priority(
         return PriorityResult(
             score=0,
             label="low",
-            reasons=["Planned work is not prioritised against unplanned incidents."],
+            reasons=["Planuoti darbai neprioritetizuojami kartu su neplanuotais incidentais."],
             missing_inputs=[],
         )
 
@@ -47,14 +54,15 @@ def calculate_priority(
     else:
         customer_points = min(affected_customers // 100, 40)
         score += customer_points
-        reasons.append(f"{affected_customers} affected customers (+{customer_points} pts)")
+        reasons.append(f"{affected_customers} paveiktų klientų (+{customer_points} tšk.)")
 
     if severity is None:
         missing_inputs.append("severity")
     else:
         severity_points = SEVERITY_POINTS.get(severity, 0)
         score += severity_points
-        reasons.append(f"severity={severity} (+{severity_points} pts)")
+        severity_lt = SEVERITY_LABELS_LT.get(severity, severity)
+        reasons.append(f"svarbumas: {severity_lt} (+{severity_points} tšk.)")
 
     if started_at is None:
         missing_inputs.append("started_at")
@@ -62,7 +70,7 @@ def calculate_priority(
         elapsed_hours = (datetime.now(timezone.utc) - started_at).total_seconds() / 3600
         duration_points = min(int(elapsed_hours // 2), 20)
         score += duration_points
-        reasons.append(f"open for {elapsed_hours:.1f}h (+{duration_points} pts)")
+        reasons.append(f"atviras {elapsed_hours:.1f} val. (+{duration_points} tšk.)")
 
     if score >= 70:
         label = "urgent"

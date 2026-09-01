@@ -41,26 +41,28 @@ provider). For real semantic search, also set `GRIDOPS_VOYAGE_API_KEY` in
 
 ## 2-minute demo script
 
-Click the three buttons at the top of the page in order:
+The UI is Lithuanian (see below). Click the three buttons at the top of the
+page in order — full script with timings: [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md).
 
-1. **"Flow A: Prioritise this morning"** — the agent queries all open
-   incidents, calculates a transparent DEMO-ONLY priority score for each
-   (visible with its reasons in the left panel), retrieves the relevant
-   escalation procedure, and explains its recommendation. Point out the
-   right panel: exact tool calls, exact database facts, exact procedure
-   citation with document + section.
+1. **"A: Prioritetai šį rytą"** — the agent queries all open incidents,
+   calculates a transparent DEMO-ONLY priority score for each (visible with
+   its reasons in the left panel), retrieves the relevant escalation
+   procedure, and explains its recommendation. Point out the right panel:
+   exact tool calls, exact database facts, exact procedure citation with
+   document + section.
 
-2. **"Flow B: Draft escalation for INC-1042"** — the agent fetches the
-   incident, cites the ticket-quality/escalation procedures, and creates a
-   ticket. Point out the red **DRAFT — HUMAN APPROVAL REQUIRED** banner and
-   click **Confirm ticket** — that's the only thing that can move it to
-   `CONFIRMED`. The agent explicitly says it cannot do this itself.
+2. **"B: Eskalavimo juodraštis INC-1042"** — the agent fetches the incident,
+   cites the ticket-quality/escalation procedures, and creates a ticket.
+   Point out the red **JUODRAŠTIS — REIKALINGAS ŽMOGAUS PATVIRTINIMAS**
+   banner and click **Patvirtinti** — that's the only thing that can move it
+   to `PATVIRTINTA`. The agent explicitly says it cannot do this itself.
 
-3. **"Flow C: What caused INC-1042?"** — the agent says the confirmed cause
-   is not available in the data. It does not guess a cause. This is the one
-   flow that must never hallucinate; a code-level check
+3. **"C: Kas sukėlė INC-1042?"** — the agent says the confirmed cause is not
+   available in the data. It does not guess a cause. This is the one flow
+   that must never hallucinate; a code-level check
    (`backend/app/agent.py::_violates_null_cause_rule`) blocks the answer if
-   it ever tries.
+   it ever tries — including if the model answers with a Lithuanian cause
+   word instead of an English one.
 
 ## Architecture — trace it yourself
 
@@ -96,6 +98,22 @@ No Alembic (schema is created once via `Base.metadata.create_all` — simpler
 to trace than migrations for a fixed, one-shot schema). No LangChain/agent
 framework — the tool loop in `agent.py` is ~100 lines of plain Python,
 readable top to bottom.
+
+## Demonstracija lietuvių kalba
+
+Visa naudotojo sąsaja (klausimų forma, atsakymai, prioriteto lentelė,
+įrankių pėdsakas, eskalavimo juodraščio langas) yra lietuvių kalba. Visi
+incidentų duomenys ir procedūrų dokumentai yra sintetiniai — sistema neturi
+prieigos prie jokių realių sistemų ar duomenų. Trys demonstraciniai
+scenarijai (mygtukai UI viršuje):
+
+- **A** — kuriuos atvirus incidentus prioritetizuoti šį rytą ir kodėl;
+- **B** — parengti INC-1042 eskalavimo juodraštį (JUODRAŠTIS, kol žmogus jo
+  nepatvirtina);
+- **C** — kas sukėlė INC-1042 — agentas privalo pripažinti, kad patvirtinta
+  priežastis duomenyse nenurodyta, o ne spėlioti.
+
+Pilnas scenarijus su laiko žymomis: [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md).
 
 ## Known limitations
 

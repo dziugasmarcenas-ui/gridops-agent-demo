@@ -24,11 +24,20 @@ from .models import Base, ProcedureChunk
 PROCEDURES_DIR = Path(__file__).parent / "data" / "procedures"
 
 _SECTION_HEADING = re.compile(r"^## (.+)$", re.MULTILINE)
+_TITLE_HEADING = re.compile(r"^# (.+)$", re.MULTILINE)
 _VERSION_COMMENT = re.compile(r"<!--\s*version:\s*([^\s]+)\s*-->")
 
 
-def parse_document(markdown_text: str) -> tuple[str, list[tuple[str, str]]]:
-    """Returns (version, [(section_heading, section_body_text), ...])."""
+def parse_document(markdown_text: str) -> tuple[str, str, list[tuple[str, str]]]:
+    """Returns (title, version, [(section_heading, section_body_text), ...]).
+
+    The document's H1 heading (e.g. "# Incidentų pirminio vertinimo procedūra")
+    is what gets shown to the user as the citation source -- the on-disk
+    filename (e.g. incident_triage.md) stays an internal identifier only.
+    """
+    title_match = _TITLE_HEADING.search(markdown_text)
+    title = title_match.group(1).strip() if title_match else "Nežinomas dokumentas"
+
     version_match = _VERSION_COMMENT.search(markdown_text)
     version = version_match.group(1) if version_match else "1.0"
 
@@ -40,7 +49,7 @@ def parse_document(markdown_text: str) -> tuple[str, list[tuple[str, str]]]:
         end = headings[i + 1].start() if i + 1 < len(headings) else len(markdown_text)
         body = markdown_text[start:end].strip()
         chunks.append((section, body))
-    return version, chunks
+    return title, version, chunks
 
 
 def ingest() -> None:
@@ -57,14 +66,13 @@ def ingest() -> None:
         # and safer than diffing.
         session.execute(delete(ProcedureChunk))
 
-        documents: list[tuple[str, str, str]] = []  # (document_name, section, text)
+        documents: list[tuple[str, str, str]] = []  # (document_title, section, text)
         doc_versions: dict[str, str] = {}
         for path in sorted(PROCEDURES_DIR.glob("*.md")):
-            document_name = path.stem
-            version, chunks = parse_document(path.read_text())
-            doc_versions[document_name] = version
+            title, version, chunks = parse_document(path.read_text())
+            doc_versions[title] = version
             for section, body in chunks:
-                documents.append((document_name, section, body))
+                documents.append((title, section, body))
 
         texts = [body for _, _, body in documents]
         vectors = provider.embed_passages(texts) if texts else []

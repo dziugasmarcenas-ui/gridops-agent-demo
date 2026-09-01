@@ -22,6 +22,9 @@ network operations team. ALL data you see is synthetic, generated for a portfoli
 -- you are not connected to any real utility system.
 
 Rules you must follow exactly:
+0. ALWAYS answer in Lithuanian (lietuvių kalba), regardless of what language the \
+question is in, using professional internal-enterprise Lithuanian suitable for a \
+utility company's internal operations tool. Never answer in English.
 1. Get every incident fact via the query_incidents tool. Never state an incident's \
 region, customer count, severity, or cause from memory or inference.
 2. Never invent or guess a confirmed cause. If a tool result shows confirmed_cause as \
@@ -34,7 +37,10 @@ prioritisation logic, not real operating policy, when you state a priority.
 and section it returns. Never invent a document name or section number.
 5. draft_escalation_ticket only ever creates a DRAFT. After calling it, always state \
 clearly that a human must review and confirm it before it has any effect, and that you \
-cannot approve or send it yourself.
+cannot approve or send it yourself. Write EVERY field value you pass to this tool \
+(summary, proposed_priority, requested_action, supporting_evidence) in Lithuanian too -- \
+proposed_priority must be a Lithuanian word (e.g. "žemas", "vidutinis", "aukštas", \
+"skubus"), never the English priority label from the tool result.
 6. If information needed to answer is missing from tool results, say it's missing \
 rather than filling the gap with a plausible guess.
 7. When asked which incidents to prioritise, escalate, or act on, ALWAYS also call \
@@ -46,7 +52,18 @@ ground your recommendation in it with a citation. Do not answer from incident da
 # for an incident whose confirmed_cause was null in the tool results, the LLM
 # hallucinated -- the prompt failed -- and we override the answer in code rather than
 # trust prose alone. This is what "do not rely solely on prompting" means in practice.
+#
+# Lithuanian stems (substrings, lowercased) catch inflected forms -- e.g. "gedim"
+# matches "gedimas"/"gedimo"/"gedimu". English keywords are kept too as a bilingual
+# safety net in case the model ever answers in English despite rule 0.
 _CAUSE_KEYWORDS = [
+    # Lithuanian
+    "kabelio gedim", "augalijos sąlyt", "audros pažeidim", "audros sukelt",
+    "transformatoriaus perkrov", "transformatoriaus gedim", "iškasimo pažeidim",
+    "iškasimo darb", "įrangos susidėvėjim", "įrangos gedim", "relinės apsaugos gedim",
+    "relės gedim", "voverės sąlyt", "gyvūno sąlyt", "tikėtina priežas", "tikėtinos priežas",
+    "spėjama priežas", "spėjamos priežas", "galima priežas", "oro sąlyg", "dėl orų",
+    # English (defense in depth)
     "cable fault", "vegetation contact", "storm damage", "transformer overload",
     "transformer failure", "excavation damage", "equipment aging", "equipment failure",
     "relay misoperation", "squirrel contact", "probable cause", "likely cause",
@@ -65,8 +82,8 @@ def run_agent(session: Session, question: str) -> dict:
     if not settings.anthropic_api_key:
         return {
             "answer": (
-                "GRIDOPS_ANTHROPIC_API_KEY is not configured, so the agent cannot call an "
-                "LLM. Set it in your environment and restart the backend."
+                "GRIDOPS_ANTHROPIC_API_KEY nesukonfigūruotas, todėl agentas negali "
+                "iškviesti LLM. Nustatykite jį aplinkoje ir iš naujo paleiskite backend."
             ),
             "tool_calls": [],
             "incidents": [],
@@ -95,9 +112,11 @@ def run_agent(session: Session, question: str) -> dict:
             if _violates_null_cause_rule(answer_text, null_cause_incident_ids):
                 ids = ", ".join(sorted(null_cause_incident_ids))
                 answer_text = (
-                    f"The available incident data does not contain a confirmed cause for {ids}. "
-                    "(The model's draft answer was blocked by the deterministic null-cause "
-                    "safety check because it mentioned a specific cause that is not on file.)"
+                    f"Turimuose incidento duomenyse patvirtinta {ids} priežastis nenurodyta. "
+                    "Negaliu pagrįstai nustatyti priežasties iš turimos informacijos. "
+                    "(Modelio parengtas atsakymas buvo blokuotas dėl deterministinės "
+                    "apsaugos, nes jame buvo paminėta konkreti priežastis, kurios nėra "
+                    "duomenyse.)"
                 )
             return {
                 "answer": answer_text,
@@ -129,7 +148,7 @@ def run_agent(session: Session, question: str) -> dict:
         messages.append({"role": "user", "content": tool_results})
 
     return {
-        "answer": "The agent used too many tool calls without reaching an answer. Try a narrower question.",
+        "answer": "Agentas atliko per daug įrankių iškvietimų ir nepasiekė atsakymo. Pabandykite pateikti konkretesnį klausimą.",
         "tool_calls": tool_call_log,
         "incidents": incidents_seen,
         "procedures": procedures_seen,

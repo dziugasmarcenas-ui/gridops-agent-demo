@@ -33,6 +33,19 @@ def test_null_cause_guard_is_a_no_op_when_no_incident_has_a_null_cause() -> None
     assert not _violates_null_cause_rule(text_mentioning_a_cause, set())
 
 
+def test_null_cause_guard_blocks_a_fabricated_cause_in_lithuanian() -> None:
+    hallucinated_answer = "Incidentą greičiausiai sukėlė transformatoriaus gedimas."
+    assert _violates_null_cause_rule(hallucinated_answer, {"INC-1042"})
+
+
+def test_null_cause_guard_allows_a_correct_unknown_answer_in_lithuanian() -> None:
+    honest_answer = (
+        "Turimuose incidento duomenyse patvirtinta INC-1042 priežastis nenurodyta. "
+        "Negaliu pagrįstai nustatyti priežasties iš turimos informacijos."
+    )
+    assert not _violates_null_cause_rule(honest_answer, {"INC-1042"})
+
+
 def test_priority_never_invents_missing_inputs() -> None:
     result = calculate_priority(
         affected_customers=None,

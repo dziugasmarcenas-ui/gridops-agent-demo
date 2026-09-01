@@ -1,27 +1,27 @@
-<!-- SYNTHETIC DOCUMENT — fictional demo content, not a real operating procedure. -->
+<!-- SINTETINIS DOKUMENTAS — fiktyvus demonstracinis turinys, ne tikra veiklos procedūra. -->
 <!-- version: 1.0 -->
 
-# Ticket Quality (SYNTHETIC)
+# Eskalavimo įrašo kokybės reikalavimai
 
-## 2.1 What makes a ticket usable
+## 2.1 Kas daro įrašą naudingą
 
-A usable escalation ticket lets the duty manager act without re-contacting
-the reporter. It states what happened, how bad it is, what is being asked
-for, and what evidence supports that request. Vague summaries such as
-"network issue, please check" are not acceptable.
+Naudingas eskalavimo įrašas leidžia budinčiam vadovui veikti nesikreipiant
+pakartotinai į pranešėją. Jame nurodoma, kas įvyko, koks yra masto
+sunkumas, ko prašoma ir kokie duomenys pagrindžia šį prašymą. Neaiškios
+santraukos, tokios kaip „tinklo problema, patikrinti", yra nepriimtinos.
 
-## 2.2 Never invent missing fields
+## 2.2 Niekada neišgalvoti trūkstamų laukų
 
-If a required field — cause, customer count, duration, or region — is not
-available in the source data, the ticket must show that field as unknown or
-omit it with an explicit note, never fill it with a plausible-sounding
-guess. A ticket author who is uncertain about a value should leave it
-unknown rather than approximate it.
+Jei būtinas laukas — priežastis, klientų skaičius, trukmė ar regionas —
+nėra prieinamas šaltinio duomenyse, įraše šis laukas turi būti pažymėtas
+kaip nežinomas arba praleistas su aiškia pastaba, bet niekada neužpildytas
+tikėtinai skambančia spėjimu. Įrašo autorius, nesantis tikras dėl reikšmės,
+turi ją palikti nežinoma, o ne apytiksliai ją nurodyti.
 
-## 2.3 Draft status and human review
+## 2.3 Juodraščio būsena ir žmogaus peržiūra
 
-Every generated ticket starts in DRAFT status. A draft is not sent anywhere
-and has no operational effect. A ticket only becomes actionable after a
-human reviewer explicitly confirms it; automated systems, including any
-assistant that helped compose the draft, may not confirm a ticket on a
-human's behalf.
+Kiekvienas sugeneruotas įrašas pradedamas JUODRAŠČIO būsenoje. Juodraštis
+niekur nesiunčiamas ir neturi jokio veiklos poveikio. Įrašas tampa
+veiksmingas tik po to, kai žmogus — peržiūrėtojas — jį aiškiai patvirtina;
+automatinės sistemos, įskaitant bet kokį asistentą, padėjusį parengti
+juodraštį, negali patvirtinti įrašo žmogaus vardu.

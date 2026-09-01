@@ -24,11 +24,17 @@ body {
 }
 
 h1 {
-  margin: 0 0 1.5rem;
+  margin: 0;
   font-family: Georgia, serif;
   font-size: clamp(2rem, 6vw, 3rem);
   font-weight: 400;
   letter-spacing: -0.03em;
+}
+
+.subtitle {
+  margin: 0.2rem 0 1.5rem;
+  color: #5f695f;
+  font-size: 1rem;
 }
 
 h2 {
@@ -202,8 +208,15 @@ button:disabled {
   margin-bottom: 0.5rem;
 }
 
-.side-block code {
+.side-block .tool-name {
   font-weight: 700;
+  display: block;
+}
+
+.side-block .tool-fn {
+  font-size: 0.7rem;
+  color: #5f695f;
+  font-weight: 400;
 }
 
 .side-block pre {
@@ -263,4 +276,14 @@ button:disabled {
   color: #3a4a3a;
   margin: 0;
   white-space: pre-wrap;
+}
+
+.footer-disclaimer {
+  margin-top: 3rem;
+  padding-top: 1rem;
+  border-top: 1px solid #d8d4c6;
+  color: #5f695f;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  max-width: 42rem;
 }

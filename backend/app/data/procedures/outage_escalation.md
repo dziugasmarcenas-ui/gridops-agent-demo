@@ -1,30 +1,30 @@
-<!-- SYNTHETIC DOCUMENT — fictional demo content, not a real operating procedure. -->
+<!-- SINTETINIS DOKUMENTAS — fiktyvus demonstracinis turinys, ne tikra veiklos procedūra. -->
 <!-- version: 1.0 -->
 
-# Outage Escalation (SYNTHETIC)
+# Tinklo sutrikimų eskalavimo procedūra
 
-## 3.1 Initial review
+## 3.1 Pirminė peržiūra
 
-Before escalating an open incident, confirm it has already been through
-triage and has a recorded severity, affected-customer count, and elapsed
-duration. Do not escalate an incident that is missing any of these three
-fields — request the missing data from the field team first.
+Prieš eskaluojant atvirą incidentą, būtina įsitikinti, kad jis jau praėjo
+pirminį vertinimą ir turi užfiksuotą svarbumą, paveiktų klientų skaičių bei
+trukmę. Neeskaluokite incidento, kuriam trūksta bent vieno iš šių trijų
+laukų — pirmiausia paprašykite trūkstamų duomenų iš lauko komandos.
 
-## 3.2 Escalation conditions
+## 3.2 Eskalavimo sąlygos
 
-An open, unplanned incident should be escalated to the regional duty manager
-when any of the following are true: affected customers exceed 2,000, severity
-is "high" or "critical", or the incident has been open for more than 6 hours
-without resolution. Multiple conditions being true does not change the
-escalation decision — one is enough to trigger escalation, but the ticket
-should note every condition that applied.
+Atviras, neplanuotas incidentas turi būti eskaluojamas regiono budinčiam
+vadovui, jei įvykdoma bent viena iš šių sąlygų: paveiktų klientų skaičius
+viršija 2000, svarbumas yra „aukštas" arba „kritinis", arba incidentas
+liko neišspręstas ilgiau nei 6 valandas. Kelių sąlygų vienalaikis
+įvykdymas nekeičia eskalavimo sprendimo — pakanka vienos, tačiau įraše
+būtina pažymėti visas įvykdytas sąlygas.
 
-## 3.3 Required escalation information
+## 3.3 Būtina eskalavimo informacija
 
-Every escalation ticket must include: a one-paragraph summary of the
-incident, the proposed priority level, the specific requested action for the
-duty manager, and the supporting evidence used to justify escalation
-(affected-customer count, duration, and severity at minimum). If the
-confirmed cause is not yet known, the ticket must say so explicitly rather
-than omitting the field or guessing. A ticket missing required information is
-a draft, not a submission-ready ticket, and must not be marked confirmed.
+Kiekviename eskalavimo įraše privalo būti: vienos pastraipos incidento
+santrauka, siūlomas prioriteto lygis, konkretus siūlomas veiksmas budinčiam
+vadovui ir eskalavimą pagrindžiantys duomenys (bent jau paveiktų klientų
+skaičius, trukmė ir svarbumas). Jei patvirtinta priežastis dar nežinoma,
+įraše tai privalo būti aiškiai nurodyta, o ne praleista ar spėjama. Įrašas,
+kuriame trūksta būtinos informacijos, yra tik juodraštis, o ne parengtas
+pateikti įrašas, ir negali būti žymimas kaip patvirtintas.
