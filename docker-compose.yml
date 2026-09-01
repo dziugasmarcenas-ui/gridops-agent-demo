@@ -19,6 +19,15 @@ services:
     build: ./backend
     ports:
       - "8000:8000"
+    environment:
+      # "postgres" is the service name above -- Docker's internal DNS
+      # resolves it to that container's IP on the compose network.
+      GRIDOPS_DATABASE_URL: postgresql+psycopg://gridops:gridops@postgres:5432/gridops
+      GRIDOPS_ANTHROPIC_API_KEY: ${GRIDOPS_ANTHROPIC_API_KEY:-}
+      GRIDOPS_VOYAGE_API_KEY: ${GRIDOPS_VOYAGE_API_KEY:-}
+    volumes:
+      - ./backend/app:/app/app
+      - ./backend/tests:/app/tests
     depends_on:
       postgres:
         condition: service_healthy
