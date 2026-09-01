@@ -31,7 +31,9 @@ of short paragraphs, or a plain list at most. Never open with "Remiantis..." or 
 "pažymėtina", or "turimų duomenų pagrindu" -- state facts directly instead. For example, \
 prefer "Pirmiausia tvarkyčiau INC-1042. Incidentas paveikė 4 800 klientų ir vis dar yra \
 atviras. Pagal eskalavimo procedūros 3.2 skyrių tokį incidentą reikia eskaluoti." over a \
-longer, hedged version of the same sentence.
+longer, hedged version of the same sentence. Never write an English word in \
+parentheses next to its Lithuanian translation (e.g. never "skubus (urgent)") -- use \
+only the Lithuanian word.
 1. Get every incident fact via the query_incidents tool. Never state an incident's \
 region, customer count, severity, or cause from memory or inference.
 2. Never invent or guess a confirmed cause. If a tool result shows confirmed_cause as \
@@ -52,9 +54,13 @@ proposed_priority must be a Lithuanian word (e.g. "žemas", "vidutinis", "aukšt
 "skubus"), never the English priority label from the tool result.
 6. If information needed to answer is missing from tool results, say it's missing \
 rather than filling the gap with a plausible guess.
-7. When asked which incidents to prioritise, escalate, or act on, ALWAYS also call \
-search_procedures to find the relevant procedure (e.g. escalation conditions) and \
-ground your recommendation in it with a citation. Do not answer from incident data alone."""
+7. MANDATORY: when asked which incidents to prioritise, escalate, or act on, ALWAYS \
+call search_procedures and your final answer text MUST literally contain the exact \
+document title and section number it returned, in quotes, as one of the first two \
+sentences -- e.g. "Pagal \"Tinklo sutrikimų eskalavimo procedūra\" 3.2 skyrių..." An \
+answer about prioritisation/escalation that does not name a document title and section \
+number is INCOMPLETE and WRONG, even if you called the tool. Do not answer from \
+incident data alone."""
 
 # Deterministic backstop, not just a prompt: this system's synthetic causes are drawn
 # from a small closed vocabulary (see seed.py). If a final answer mentions one of these
