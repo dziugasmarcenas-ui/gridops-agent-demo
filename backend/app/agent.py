@@ -1,7 +1,7 @@
 """The explicit agent loop. No framework -- this IS the whole mechanism:
 
-    ask Claude -> Claude requests a tool -> Python runs the tool ->
-    feed the result back -> repeat until Claude answers in plain text.
+    ask the model -> model requests a tool -> Python runs the tool ->
+    feed the result back -> repeat until the model answers in plain text.
 
 Trace it by reading this file top to bottom; there is nothing hidden behind
 an abstraction elsewhere.
@@ -9,13 +9,28 @@ an abstraction elsewhere.
 
 from __future__ import annotations
 
-import re
+import json
 
-import anthropic
+import openai
 from sqlalchemy.orm import Session
 
 from .config import settings
 from .tools import DISPATCH, TOOL_SCHEMAS
+
+# OpenAI's Chat Completions API wants each tool wrapped as {"type": "function",
+# "function": {...}}; TOOL_SCHEMAS in tools.py stays provider-neutral
+# (name/description/input_schema) so only this file needs to know OpenAI's shape.
+_OPENAI_TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": schema["name"],
+            "description": schema["description"],
+            "parameters": schema["input_schema"],
+        },
+    }
+    for schema in TOOL_SCHEMAS
+]
 
 SYSTEM_PROMPT = """You are GRIDOPS AGENT, a demo assistant for a fictional utility's \
 network operations team. ALL data you see is synthetic, generated for a portfolio demo \
@@ -54,13 +69,14 @@ proposed_priority must be a Lithuanian word (e.g. "žemas", "vidutinis", "aukšt
 "skubus"), never the English priority label from the tool result.
 6. If information needed to answer is missing from tool results, say it's missing \
 rather than filling the gap with a plausible guess.
-7. MANDATORY: when asked which incidents to prioritise, escalate, or act on, ALWAYS \
-call search_procedures and your final answer text MUST literally contain the exact \
-document title and section number it returned, in quotes, as one of the first two \
-sentences -- e.g. "Pagal \"Tinklo sutrikimų eskalavimo procedūra\" 3.2 skyrių..." An \
-answer about prioritisation/escalation that does not name a document title and section \
-number is INCOMPLETE and WRONG, even if you called the tool. Do not answer from \
-incident data alone."""
+7. MANDATORY: when asked which incidents to prioritise, escalate, or act on -- \
+INCLUDING every time you call draft_escalation_ticket -- ALWAYS call search_procedures \
+and your final answer text MUST literally contain the exact document title and section \
+number it returned, in quotes, as one of the first two sentences -- e.g. "Pagal \
+\"Tinklo sutrikimų eskalavimo procedūra\" 3.2 skyrių..." An answer about \
+prioritisation/escalation/ticket drafting that does not name a document title and \
+section number is INCOMPLETE and WRONG, even if you called the tool. Do not answer \
+from incident data alone."""
 
 # Deterministic backstop, not just a prompt: this system's synthetic causes are drawn
 # from a small closed vocabulary (see seed.py). If a final answer mentions one of these
@@ -94,10 +110,10 @@ def _violates_null_cause_rule(answer_text: str, null_cause_incident_ids: set[str
 
 
 def run_agent(session: Session, question: str) -> dict:
-    if not settings.anthropic_api_key:
+    if not settings.openai_api_key:
         return {
             "answer": (
-                "GRIDOPS_ANTHROPIC_API_KEY nesukonfigūruotas, todėl agentas negali "
+                "GRIDOPS_OPENAI_API_KEY nesukonfigūruotas, todėl agentas negali "
                 "iškviesti LLM. Nustatykite jį aplinkoje ir iš naujo paleiskite backend."
             ),
             "tool_calls": [],
@@ -105,8 +121,11 @@ def run_agent(session: Session, question: str) -> dict:
             "procedures": [],
         }
 
-    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
-    messages: list[dict] = [{"role": "user", "content": question}]
+    client = openai.OpenAI(api_key=settings.openai_api_key)
+    messages: list[dict] = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": question},
+    ]
 
     tool_call_log: list[dict] = []
     incidents_seen: list[dict] = []
@@ -114,16 +133,16 @@ def run_agent(session: Session, question: str) -> dict:
     null_cause_incident_ids: set[str] = set()
 
     for _ in range(6):  # hard cap so a misbehaving loop can't run forever
-        response = client.messages.create(
-            model=settings.anthropic_model,
+        response = client.chat.completions.create(
+            model=settings.openai_model,
             max_tokens=1500,
-            system=SYSTEM_PROMPT,
-            tools=TOOL_SCHEMAS,
+            tools=_OPENAI_TOOLS,
             messages=messages,
         )
+        message = response.choices[0].message
 
-        if response.stop_reason != "tool_use":
-            answer_text = "".join(block.text for block in response.content if block.type == "text")
+        if not message.tool_calls:
+            answer_text = message.content or ""
             if _violates_null_cause_rule(answer_text, null_cause_incident_ids):
                 ids = ", ".join(sorted(null_cause_incident_ids))
                 answer_text = (
@@ -139,27 +158,24 @@ def run_agent(session: Session, question: str) -> dict:
                 "procedures": procedures_seen,
             }
 
-        messages.append({"role": "assistant", "content": response.content})
-        tool_results = []
-        for block in response.content:
-            if block.type != "tool_use":
-                continue
-            dispatch = DISPATCH[block.name]
-            result = dispatch(session, block.input)
-            tool_call_log.append({"tool": block.name, "input": block.input, "output": result})
+        messages.append(message.model_dump(exclude_unset=True))
+        for call in message.tool_calls:
+            args = json.loads(call.function.arguments)
+            dispatch = DISPATCH[call.function.name]
+            result = dispatch(session, args)
+            tool_call_log.append({"tool": call.function.name, "input": args, "output": result})
 
-            if block.name == "query_incidents":
+            if call.function.name == "query_incidents":
                 for incident in result.get("incidents", []):
                     incidents_seen.append(incident)
                     if incident["confirmed_cause"] is None:
                         null_cause_incident_ids.add(incident["incident_id"])
-            if block.name == "search_procedures":
+            if call.function.name == "search_procedures":
                 procedures_seen.extend(result.get("passages", []))
 
-            tool_results.append(
-                {"type": "tool_result", "tool_use_id": block.id, "content": _to_text(result)}
+            messages.append(
+                {"role": "tool", "tool_call_id": call.id, "content": json.dumps(result, default=str)}
             )
-        messages.append({"role": "user", "content": tool_results})
 
     return {
         "answer": "Agentas atliko per daug įrankių iškvietimų ir nepasiekė atsakymo. Pabandykite pateikti konkretesnį klausimą.",
@@ -167,9 +183,3 @@ def run_agent(session: Session, question: str) -> dict:
         "incidents": incidents_seen,
         "procedures": procedures_seen,
     }
-
-
-def _to_text(result: dict) -> str:
-    import json
-
-    return json.dumps(result, default=str)

@@ -18,8 +18,8 @@ class Settings(BaseSettings):
 
     # Optional: if unset, the agent endpoint returns a clear error instead of
     # silently failing, rather than fabricating a response.
-    anthropic_api_key: str | None = None
-    anthropic_model: str = "claude-sonnet-4-5-20250929"
+    openai_api_key: str | None = None
+    openai_model: str = "gpt-4o"
 
     model_config = SettingsConfigDict(env_prefix="GRIDOPS_", extra="ignore")
 

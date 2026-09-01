@@ -23,11 +23,11 @@ for hand-checked correctness/safety cases.
 
 ## Quickstart
 
-Requires Docker Desktop running and an [Anthropic API key](https://console.anthropic.com/).
+Requires Docker Desktop running and an [OpenAI API key](https://platform.openai.com/api-keys).
 
 ```bash
 cd gridops-agent-demo
-echo "GRIDOPS_ANTHROPIC_API_KEY=sk-ant-..." > .env
+echo "GRIDOPS_OPENAI_API_KEY=sk-..." > .env
 docker compose up -d --build
 docker compose exec backend python -m app.seed              # incidents
 docker compose exec backend python -m app.ingest_procedures  # procedure chunks
@@ -70,7 +70,7 @@ page in order — full script with timings: [`docs/DEMO_SCRIPT.md`](docs/DEMO_SC
 browser (React) → FastAPI (main.py) → agent loop (agent.py)
   → tool dispatch (tools.py) → Postgres (incidents_repo.py) or
                                 pgvector search (retrieval.py)
-  → tool result fed back to the LLM (Anthropic API)
+  → tool result fed back to the LLM (OpenAI API)
   → final answer + full evidence trail → browser
 ```
 
@@ -90,7 +90,7 @@ browser (React) → FastAPI (main.py) → agent loop (agent.py)
 
 ## Stack
 
-FastAPI · SQLAlchemy · PostgreSQL + pgvector · Anthropic Claude (tool use) ·
+FastAPI · SQLAlchemy · PostgreSQL + pgvector · OpenAI (function calling) ·
 Voyage embeddings (optional; deterministic local fallback by default) ·
 React + Vite + TypeScript · Docker Compose.
 
