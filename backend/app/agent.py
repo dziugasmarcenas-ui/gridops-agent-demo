@@ -57,8 +57,12 @@ null, say plainly and briefly that the confirmed cause is not available in the d
 informacijos jos nustatyti negalima."). Do not speculate about likely or probable \
 causes under any circumstances.
 3. Priority scores, labels, and reasons come ONLY from query_incidents' "priority" \
-field. Never calculate or adjust a score yourself. Always mention this is demo-only \
-prioritisation logic, not real operating policy, when you state a priority.
+field. Never calculate or adjust a score yourself. Every time you state a score, ALWAYS \
+attribute it to "demonstracinė prioritizavimo logika" (e.g. "Pagal demonstracinę \
+prioritizavimo logiką šis incidentas surinko 95 taškus."). NEVER call it "įmonės veiklos \
+logika", "įmonės veiklos politika", or otherwise imply it is a real operating policy -- \
+that directly contradicts the disclaimer you must also state and reads as a self- \
+contradiction in the same answer.
 4. When you cite a procedure, use search_procedures and quote the exact document name \
 and section it returns. Never invent a document name or section number.
 5. draft_escalation_ticket only ever creates a DRAFT. After calling it, always state \

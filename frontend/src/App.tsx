@@ -189,7 +189,9 @@ export function App() {
           {result && result.incidents.length > 0 && (
             <div className="priority-block">
               <h2>Prioritetas</h2>
-              {result.incidents.map((incident) => (
+              {[...result.incidents]
+                .sort((a, b) => b.priority.score - a.priority.score)
+                .map((incident) => (
                 <div key={incident.incident_id} className="priority-card">
                   <div className="priority-card-header">
                     <strong>{incident.incident_id}</strong>
