@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: gridops-agent
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: GRIDOPS_DATABASE_URL
+        fromDatabase:
+          name: gridops-db
+          property: connectionString
+      - key: GRIDOPS_REQUIRE_DEMO_AUTH
+        value: "true"
+      - key: GRIDOPS_DEMO_AUTH_USERNAME
+        value: demo
+      - key: GRIDOPS_DEMO_AUTH_PASSWORD
+        sync: false
+      - key: GRIDOPS_OPENAI_API_KEY
+        sync: false
+
+databases:
+  - name: gridops-db
+    databaseName: gridops
+    user: gridops
+    plan: free
+    region: frankfurt

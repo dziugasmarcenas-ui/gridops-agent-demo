@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = import.meta.env.DEV ? "http://localhost:8000" : "";
 
 // Presentation-layer translations only -- the underlying English enum
 // values (open/resolved, low/medium/high/critical, etc.) stay as-is in the
@@ -73,6 +73,8 @@ type AgentResponse = {
   tool_calls: ToolCall[];
   incidents: Incident[];
   procedures: Procedure[];
+  guard_triggered: boolean;
+  priority_mismatch: boolean;
 };
 
 type TicketDraft = {
@@ -182,6 +184,16 @@ export function App() {
           {result && (
             <div className="answer-block">
               <h2>Atsakymas</h2>
+              {result.guard_triggered && (
+                <p className="guard-banner">
+                  APSAUGA SUVEIKĖ — modelio atsakymas buvo blokuotas ir pakeistas kodo lygmens patikra, nes jame buvo paminėta priežastis, kurios duomenyse nėra.
+                </p>
+              )}
+              {result.priority_mismatch && (
+                <p className="guard-banner guard-banner--warning">
+                  ĮSPĖJIMAS — atsakyme paminėtas prioriteto balas, kurio įrankiai negrąžino. Tikrinkite prieš naudojant.
+                </p>
+              )}
               <p className="answer-text">{result.answer}</p>
             </div>
           )}

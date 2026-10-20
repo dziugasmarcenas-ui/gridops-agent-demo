@@ -10,6 +10,7 @@ an abstraction elsewhere.
 from __future__ import annotations
 
 import json
+import re
 
 import openai
 from sqlalchemy.orm import Session
@@ -113,6 +114,26 @@ def _violates_null_cause_rule(answer_text: str, null_cause_incident_ids: set[str
     return any(keyword in lowered for keyword in _CAUSE_KEYWORDS)
 
 
+# Second deterministic backstop, same idea as the null-cause guard above: the
+# system prompt tells the model to only ever repeat the score query_incidents
+# gave it, never to compute or adjust one -- but that's a prompt rule, not a
+# code rule, and prompt rules can be violated. This catches it after the fact
+# by pulling every "<number> tašk..." mention out of the final answer and
+# checking it against the actual scores the tools returned. It cannot catch a
+# wrong LABEL (e.g. calling a score-30 incident "skubus") or a score quoted
+# without the word "tašk" nearby -- it is a narrower net than the null-cause
+# guard, not an equivalent one.
+_SCORE_MENTION_RE = re.compile(r"(\d+)\s*tašk", re.IGNORECASE)
+
+
+def _priority_narrative_mismatches(answer_text: str, incidents_seen: list[dict]) -> list[int]:
+    valid_scores = {incident["priority"]["score"] for incident in incidents_seen}
+    if not valid_scores:
+        return []
+    mentioned = [int(n) for n in _SCORE_MENTION_RE.findall(answer_text)]
+    return [n for n in mentioned if n not in valid_scores]
+
+
 def run_agent(session: Session, question: str) -> dict:
     if not settings.openai_api_key:
         return {
@@ -123,9 +144,11 @@ def run_agent(session: Session, question: str) -> dict:
             "tool_calls": [],
             "incidents": [],
             "procedures": [],
+            "guard_triggered": False,
+            "priority_mismatch": False,
         }
 
-    client = openai.OpenAI(api_key=settings.openai_api_key)
+    client = openai.OpenAI(api_key=settings.openai_api_key, timeout=20.0)
     messages: list[dict] = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": question},
@@ -137,17 +160,35 @@ def run_agent(session: Session, question: str) -> dict:
     null_cause_incident_ids: set[str] = set()
 
     for _ in range(6):  # hard cap so a misbehaving loop can't run forever
-        response = client.chat.completions.create(
-            model=settings.openai_model,
-            max_tokens=1500,
-            tools=_OPENAI_TOOLS,
-            messages=messages,
-        )
+        try:
+            response = client.chat.completions.create(
+                model=settings.openai_model,
+                temperature=0,
+                max_tokens=1500,
+                tools=_OPENAI_TOOLS,
+                messages=messages,
+            )
+        except openai.APITimeoutError:
+            return {
+                "answer": "LLM neatsakė per nustatytą laiką. Pabandykite dar kartą.",
+                "tool_calls": tool_call_log,
+                "incidents": incidents_seen,
+                "procedures": procedures_seen,
+            }
+        except openai.OpenAIError:
+            return {
+                "answer": "Nepavyko susisiekti su LLM paslauga. Pabandykite dar kartą vėliau.",
+                "tool_calls": tool_call_log,
+                "incidents": incidents_seen,
+                "procedures": procedures_seen,
+            }
         message = response.choices[0].message
 
         if not message.tool_calls:
             answer_text = message.content or ""
+            guard_triggered = False
             if _violates_null_cause_rule(answer_text, null_cause_incident_ids):
+                guard_triggered = True
                 ids = ", ".join(sorted(null_cause_incident_ids))
                 answer_text = (
                     f"{ids} patvirtinta sutrikimo priežastis duomenyse nenurodyta. "
@@ -155,18 +196,37 @@ def run_agent(session: Session, question: str) -> dict:
                     "(Modelio atsakymas buvo blokuotas -- jame buvo paminėta konkreti "
                     "priežastis, kurios duomenyse nėra.)"
                 )
+            priority_mismatches = _priority_narrative_mismatches(answer_text, incidents_seen)
             return {
                 "answer": answer_text,
                 "tool_calls": tool_call_log,
                 "incidents": incidents_seen,
                 "procedures": procedures_seen,
+                "guard_triggered": guard_triggered,
+                "priority_mismatch": bool(priority_mismatches),
             }
 
         messages.append(message.model_dump(exclude_unset=True))
         for call in message.tool_calls:
-            args = json.loads(call.function.arguments)
-            dispatch = DISPATCH[call.function.name]
-            result = dispatch(session, args)
+            try:
+                args = json.loads(call.function.arguments)
+            except json.JSONDecodeError:
+                result = {"error": f"Įrankio {call.function.name!r} argumentai netinkamo formato."}
+                tool_call_log.append({"tool": call.function.name, "input": {}, "output": result})
+                messages.append(
+                    {"role": "tool", "tool_call_id": call.id, "content": json.dumps(result)}
+                )
+                continue
+
+            dispatch = DISPATCH.get(call.function.name)
+            if dispatch is None:
+                result = {"error": f"Nežinomas įrankis: {call.function.name!r}."}
+            else:
+                try:
+                    result = dispatch(session, args)
+                except ValueError as exc:
+                    result = {"error": str(exc)}
+
             tool_call_log.append({"tool": call.function.name, "input": args, "output": result})
 
             if call.function.name == "query_incidents":
@@ -186,4 +246,6 @@ def run_agent(session: Session, question: str) -> dict:
         "tool_calls": tool_call_log,
         "incidents": incidents_seen,
         "procedures": procedures_seen,
+        "guard_triggered": False,
+        "priority_mismatch": False,
     }

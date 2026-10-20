@@ -1,9 +1,17 @@
+import base64
+import binascii
+import hmac
+from pathlib import Path
+
 from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from .agent import run_agent
+from .config import settings
 from .db import SessionLocal
 from .models import TicketDraft
 from .schemas import (
@@ -21,6 +29,58 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
+
+
+if settings.require_demo_auth and not settings.demo_auth_password:
+    raise RuntimeError("GRIDOPS_DEMO_AUTH_PASSWORD is required when demo auth is enabled")
+
+
+class DemoBasicAuthMiddleware:
+    """Protect the hosted demo and API with credentials stored in the backend environment."""
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http" or not settings.require_demo_auth:
+            await self.app(scope, receive, send)
+            return
+
+        if scope.get("path") == "/health":
+            await self.app(scope, receive, send)
+            return
+
+        authorization = next(
+            (value.decode("latin-1") for key, value in scope.get("headers", []) if key.lower() == b"authorization"),
+            "",
+        )
+        scheme, separator, encoded = authorization.partition(" ")
+        authenticated = False
+        if separator and scheme.lower() == "basic":
+            try:
+                decoded = base64.b64decode(encoded, validate=True).decode("utf-8")
+                username, password = decoded.split(":", 1)
+                expected_password = settings.demo_auth_password or ""
+                authenticated = hmac.compare_digest(
+                    username.encode("utf-8"), settings.demo_auth_username.encode("utf-8")
+                ) and hmac.compare_digest(
+                    password.encode("utf-8"), expected_password.encode("utf-8")
+                )
+            except (binascii.Error, UnicodeDecodeError, ValueError):
+                authenticated = False
+
+        if authenticated:
+            await self.app(scope, receive, send)
+            return
+
+        response = Response(
+            status_code=401,
+            headers={"WWW-Authenticate": 'Basic realm="GRIDOPS private demo", charset="UTF-8"'},
+        )
+        await response(scope, receive, send)
+
+
+app.add_middleware(DemoBasicAuthMiddleware)
 
 
 @app.get("/health")
@@ -71,3 +131,12 @@ def confirm_ticket(ticket_id: int) -> TicketDraftResponse:
             created_at=draft.created_at,
             confirmed_at=draft.confirmed_at,
         )
+
+
+# In production the FastAPI service also serves the Vite build. Local
+# development keeps using the separate Vite dev server from docker-compose.
+frontend_dist = Path(__file__).resolve().parents[1] / "frontend" / "dist"
+if frontend_dist.is_dir():
+    from fastapi.staticfiles import StaticFiles
+
+    app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")

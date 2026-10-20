@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -21,7 +22,24 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     openai_model: str = "gpt-4o"
 
+    # The hosted demo can require HTTP Basic Auth without putting credentials
+    # in the frontend bundle. Local development remains open by default.
+    require_demo_auth: bool = False
+    demo_auth_username: str = "demo"
+    demo_auth_password: str | None = None
+
     model_config = SettingsConfigDict(env_prefix="GRIDOPS_", extra="ignore")
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def use_installed_psycopg_driver(cls, value: str) -> str:
+        # Render supplies PostgreSQL URLs without a SQLAlchemy driver suffix;
+        # this project installs psycopg 3 rather than psycopg2.
+        if value.startswith("postgres://"):
+            return value.replace("postgres://", "postgresql+psycopg://", 1)
+        if value.startswith("postgresql://"):
+            return value.replace("postgresql://", "postgresql+psycopg://", 1)
+        return value
 
 
 settings = Settings()

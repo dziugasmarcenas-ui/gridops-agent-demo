@@ -12,6 +12,8 @@ class AgentQueryResponse(BaseModel):
     tool_calls: list[dict]
     incidents: list[dict]
     procedures: list[dict]
+    guard_triggered: bool = False
+    priority_mismatch: bool = False
 
 
 class TicketDraftRequest(BaseModel):

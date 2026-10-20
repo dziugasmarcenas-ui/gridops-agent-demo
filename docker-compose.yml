@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: gridops
       POSTGRES_PASSWORD: gridops
     ports:
-      - "54329:5432"
+      - "54330:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
